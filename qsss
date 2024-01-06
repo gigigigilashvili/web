@@ -1,0 +1,401 @@
+OS1
+---------
+ena
+conf t
+ho OS1
+vlan 25
+name students
+vlan 35
+name lectors
+vlan 45
+name manage
+vlan 55
+name native
+vlan 65
+name unused
+
+inter fa 0/1
+sw mode trunk
+sw trunk native vlan 55
+inter fa 0/2
+sw mode trunk
+sw trunk native vlan 55
+inter fa 0/4
+sw mode trunk
+sw trunk native vlan 55
+
+inter fa0/3
+sw mode access
+sw access vlan 25
+inter fa0/5
+sw mode access
+sw access vlan 35
+
+inter range fa 0/6-24
+shutdown
+sw mode access
+sw access vlan 65
+inter range gig0/1-2
+sw mode access
+sw access vlan 65
+
+inter vlan 45
+ip address 172.20.2.130 255.255.255.224
+exit
+enable secret 2022.exec
+do wr
+
+
+
+OS2
+---------
+ena
+conf t
+ho OS2
+vlan 25
+name students
+vlan 35
+name lectors
+vlan 45
+name manage
+vlan 55
+name native
+vlan 65
+name unused
+
+inter fa 0/1
+sw mode trunk
+sw trunk native vlan 55
+inter fa 0/2
+sw mode trunk
+sw trunk native vlan 55
+
+inter fa0/3
+sw mode access
+sw access vlan 35
+inter fa0/4
+sw mode access
+sw access vlan 45
+
+inter range fa 0/5-24
+shutdown
+sw mode access
+sw access vlan 65
+inter range gig0/1-2
+sw mode access
+sw access vlan 65
+
+inter vlan 45
+ip address 172.20.2.131 255.255.255.224
+exit
+enable secret 2022.exec
+do wr
+
+
+
+
+
+OS3
+---------
+ena
+conf t
+ho OS3
+vlan 25
+name students
+vlan 35
+name lectors
+vlan 45
+name manage
+vlan 55
+name native
+vlan 65
+name unused
+
+inter fa 0/1
+sw mode trunk
+sw trunk native vlan 55
+inter fa 0/2
+sw mode trunk
+sw trunk native vlan 55
+
+inter fa0/3
+sw mode access
+sw access vlan 45
+inter fa0/4
+sw mode access
+sw access vlan 25
+
+inter range fa 0/5-24
+shutdown
+sw mode access
+sw access vlan 65
+inter range gig0/1-2
+sw mode access
+sw access vlan 65
+
+inter vlan 45
+ip address 172.20.2.132 255.255.255.224
+exit
+enable secret 2022.exec
+do wr
+
+
+OR1
+---------
+ena
+conf t
+ho OR1
+inter gig 0/1
+no shut	
+inter gig 0/1.25
+encapsulation dot1Q 25
+ip address 172.20.0.1 255.255.254.0
+inter gig 0/1.35
+encapsulation dot1Q 35
+ip address 172.20.2.1 255.255.255.128
+inter gig 0/1.45
+encapsulation dot1Q 45
+ip address 172.20.2.129 255.255.255.224
+inter se0/3/0
+no shut	
+ip address 172.20.2.162 255.255.255.252
+router ospf 25
+router-id 11.11.11.11
+passive-interface gig0/1
+passive-interface gig0/1.25
+passive-interface gig0/1.35
+passive-interface gig0/1.45
+network 172.20.0.0 0.0.1.255 area 0
+network 172.20.2.0 0.0.0.127 area 0
+network 172.20.2.128 0.0.0.31 area 0
+network 172.20.2.160 0.0.0.3 area 0
+exit
+access-list 50 deny host 172.20.2.5
+access-list 50 permit any
+inter gig 0/1.25
+ip access-group 50 in
+do wr
+
+
+
+OBR
+---------
+ena
+conf t
+ho OBR
+inter se0/3/1
+no shut
+ip address 172.20.2.161 255.255.255.252
+ip nat inside
+inter se0/3/0
+no shut
+ip address 220.0.0.1 255.255.255.192
+ip nat outside
+ip route 0.0.0.0 0.0.0.0 se0/3/0
+router ospf 25
+passive-interface se0/3/0
+router-id 10.10.10.10
+default-information originate
+network 172.20.2.160 0.0.0.3 area 0
+exit
+ip nat inside source static 172.20.2.3 220.0.0.20
+access-list 22 permit 172.20.0.0 0.0.3.255
+ip nat inside source list 22 interface se0/3/0 overload
+do wr
+
+am mowyobilobebs mere copy run tftp unda qna yvelaze tftpsac ro chartav da gauwer ips
+
+
+ISP1
+---------
+ena
+conf t
+ho ISP1
+ipv6 unicast-routing
+inter se0/3/1
+no shut
+ip address 220.0.0.2 255.255.255.192
+inter se0/2/0
+no shut
+ip address 220.0.0.66 255.255.255.192
+inter se0/3/0
+no shut
+ipv6 address 2000:2::1/64
+inter gig 0/0
+no shut
+ip address 220.0.0.129 255.255.255.192
+ipv6 address 2000:3::1/64
+ipv6 route 2001:db8:aaaa::/64 se0/3/0 2000:2::2
+ipv6 route 2001:db8:aaaa:1::/64 se0/3/0 2000:2::2
+ipv6 route 2001:db8:aaaa:2::/64 se0/3/0 2000:2::2
+
+
+
+
+EBR
+---------
+ena
+conf t
+ho EBR
+inter se0/3/0
+no shut
+ip address 220.0.0.65 255.255.255.192
+ip nat outside
+inter gig 0/1
+no shut
+ip address 172.20.0.1 255.255.255.128
+ip nat inside
+inter gig 0/0
+no shut
+ip address 172.20.0.193 255.255.255.252
+ip nat inside
+exit
+ip route 0.0.0.0 0.0.0.0 se0/3/0
+router eigrp 17
+no auto-summary
+passive-interface gig 0/1
+passive-interface se0/3/0
+redistribute static
+eigrp router-id 10.10.10.10
+network 172.20.0.0 0.0.0.127
+network 172.20.0.192 0.0.0.3
+exit
+access-list 11 permit 172.20.0.0 0.0.0.127
+access-list 11 permit 172.20.0.128 0.0.0.63
+access-list 11 permit 172.20.0.192 0.0.0.3
+ip nat inside source list 11 interface se0/3/0 overload
+line vty 0 15
+transport input telnet
+password 2022.telnet
+login
+exit
+line console 0
+password 2022.con
+login
+exit
+do wr
+
+
+
+
+
+
+
+
+
+ER1
+---------
+ena
+conf t
+ho ER1
+inter gig 0/0
+no shut
+ip address 172.20.0.194 255.255.255.252
+inter gig 0/1
+no shut
+ip address 172.20.0.129 255.255.255.192
+exit
+router eigrp 17
+no auto-summary
+passive-interface gig 0/1
+eigrp router-id 11.11.11.11
+network 172.20.0.128 0.0.0.63
+network 172.20.0.192 0.0.0.3
+exit
+ip domain-name btu.ge
+username final secret 2022.ssh
+crypto key generate rsa general-keys modulus 1700
+line vty 0 15
+transport input ssh
+login local
+exit
+access-list 51 permit host 172.20.0.5
+line vty 0 15
+access-class 51 in
+exit
+line console 0
+password 2022.con
+login
+do wr
+
+EBR da ER1 aqac copy run tftp roca tftp chartav da gauwer ip
+
+
+
+
+
+ISP2
+---------
+ena
+conf t
+ho ISP2
+ipv6 unicast-routing
+inter se0/3/0
+no shut
+ipv6 address 2000:2::2/64
+inter se0/3/1
+no shut
+ipv6 address 2000:1::2/64
+exit
+ipv6 route 2001:db8:acad:aaaa::/64 se0/3/1 2000:1::1
+ipv6 route 2001:db8:acad:aaaa:1::/64 se0/3/1 2000:1::1
+ipv6 route 2001:db8:acad:aaaa:2::/64 se0/3/1 2000:1::1
+ipv6 route 2000:3::/64 se0/3/0 2000:2::1
+
+
+Ov6BR
+---------
+ena
+conf t
+ho Ov6BR
+ipv6 unicast-routing
+inter se0/3/0
+2000:1::1/64
+no shut
+inter gig 0/0
+no shut
+ipv6 address 2001:db8:aaaa:3::1/64
+inter loop1
+ipv6 address 2001:db8:aaaa:1::1/64
+inter loop2
+ipv6 address 2001:db8:aaaa:2::1/64
+exit
+ipv6 route ::/0 se0/3/0
+ipv6 router ospf 26
+router-id 10.10.10.10
+passive-interface loop 1
+passive-interface loop 2
+passive-interface se0/3/0
+default-information originate
+inter loop 1
+ipv6 ospf 26 area 0
+inter loop 2
+ipv6 ospf 26 area 0
+inter gig 0/0
+ipv6 ospf 26 area 0
+
+
+
+
+
+
+
+
+Ov6R1
+---------
+ena
+conf t
+ho Ov6R1
+ipv6 unicast-routing
+inter gig 0/0
+ipv6 address 2001:db8:aaaa:3::2/64
+inter gig 0/1
+ipv6 address 2001:db8:aaaa::1/64
+exit
+ipv6 router ospf 26 
+passive-interface gig0/1
+router-id 11.11.11.11
+inter gig 0/1
+ipv6 ospf 26 area 0
+inter gig 0/0
+ipv6 ospf 26 area 0
